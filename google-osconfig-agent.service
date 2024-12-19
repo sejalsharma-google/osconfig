@@ -1,9 +1,16 @@
 [Unit]
 Description=Google OSConfig Agent
-After=local-fs.target network-online.target
-Wants=local-fs.target network-online.target
+After=local-fs.target network-online.target get-cloud-api-domains.service
+Wants=local-fs.target network-online.target get-cloud-api-domains.service
+ConditionPathExists=/etc/cloud-api-domains
 
 [Service]
+ExecCondition=/bin/sh -c 'FILE=/etc/cloud-api-domains; \
+  domain=$(awk -F'\''='\'' '\''/API_DOMAIN/ {print $2}'\'' $FILE); \
+  if [[ $domain != "googleapis.com" ]]; then \
+    echo "Node Problem Detector feature is currently unavailable in TPC"; \
+    exit 1; \
+  fi'
 ExecStart=/usr/bin/google_osconfig_agent
 Restart=always
 RestartSec=1
